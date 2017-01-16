@@ -4,6 +4,8 @@ apply plugin: 'osgi'
 
 ext {
 	expectedGradleVersion = '3.2.1'
+	projName = 'hibernate-json-contributor'
+	projDescription = 'A type contributor allowing Hibernate to use javax.json.JsonArray, javax.json.JsonObject and javax.json.JsonStructure objects inside entities. Used for PostgreSQL types json/jsonb.'
 }
 
 group = 'com.mopano'
@@ -85,32 +87,56 @@ task sourcesJar(type: Jar, dependsOn: compileJava) {
     from sourceSets.main.allSource
     classifier = 'sources'
 }
+task javadocJar(type: Jar, dependsOn: 'javadoc') {
+    from javadoc.destinationDir
+    classifier = 'javadoc'
+}
 
 publishing {
     publications {
         mavenJava(MavenPublication) {
             from components.java
             artifact sourcesJar
-            artifact source: sourcesJar, classifier: 'src', extension: 'zip'
+            artifact javadocJar
 
             // Maven publish plugin adds ALL dependencies with 'runtime' scope
             // see https://github.com/gradle/gradle/blob/b004f39ece183176bf77c1eebc4aa5cbc20ca5cc/subprojects/maven/src/main/java/org/gradle/api/publish/maven/tasks/GenerateMavenPom.java#L104
             pom.withXml {
-                asNode().children().each { projnode ->
-                    if (projnode.name().getLocalPart().equals('dependencies')) {
-                        projnode.children().each { depnode ->
+                Node projNode = asNode()
+                projNode.children().each { projSubnode ->
+                    if (projSubnode.name().getLocalPart().equals('dependencies')) {
+                        projSubnode.children().each { depnode ->
                             if (depnode.name().getLocalPart().equals('dependency')) {
-                                Node scopechild = null;
                                 depnode.children().each { depchild ->
                                     if (depchild.name().getLocalPart().equals('scope')) {
                                         depchild.setValue('compile')
-                                        scopechild = depchild
                                     }
                                 }
                             }
                         }
                     }
                 }
+
+               	// shamelessly copied from Hibernate build plugin
+                projNode.appendNode('name', projName)
+                projNode.appendNode('description', projDescription)
+                Node licenseNode = projNode.appendNode('licenses').appendNode('license')
+                licenseNode.appendNode('name', 'Modified BSD License')
+                licenseNode.appendNode('url', 'https://opensource.org/licenses/BSD-3-Clause')
+
+                licenseNode.appendNode('distribution', 'repo')
+                projNode.appendNode('url', 'https://github.com/mopano/hibernate-json-type')
+                Node scmNode = projNode.appendNode('scm')
+                scmNode.appendNode('url', 'https://github.com/mopano/hibernate-json-type')
+                scmNode.appendNode('connection', 'scm:git:https://github.com/mopano/hibernate-json-type.git')
+                scmNode.appendNode('developerConnection', 'scm:git:git@github.com:mopano/hibernate-json-type.git')
+
+                Node developersNode = projNode.appendNode('developers')
+                    Node developerNode = developersNode.appendNode('developer')
+                    developerNode.appendNode('id', 'coladict')
+                    developerNode.appendNode('name', 'Yordan Gigov')
+                    developerNode.appendNode('organization', 'Mopano')
+                    developerNode.appendNode('organizationUrl', 'https://mopano.com')
             }
         }
     }
