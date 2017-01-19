@@ -8,6 +8,7 @@ gradle-app.setting
 !gradle-wrapper.jar
 /.nb-gradle/
 /nbproject/
+.nb-gradle-properties
 
 # Cache of project
 .gradletasknamecache
