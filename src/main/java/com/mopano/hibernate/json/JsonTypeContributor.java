@@ -5,9 +5,15 @@
  */
 package com.mopano.hibernate.json;
 
+import java.lang.reflect.Method;
 import org.hibernate.boot.model.TypeContributions;
 import org.hibernate.boot.model.TypeContributor;
+import org.hibernate.boot.registry.classloading.spi.ClassLoaderService;
+import org.hibernate.engine.config.spi.ConfigurationService;
+import org.hibernate.engine.config.spi.StandardConverters;
 import org.hibernate.service.ServiceRegistry;
+import org.hibernate.type.AbstractSingleColumnStandardBasicType;
+import org.hibernate.type.AbstractStandardBasicType;
 import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
 import org.hibernate.type.descriptor.java.JavaTypeDescriptorRegistry;
 
@@ -31,6 +37,26 @@ public class JsonTypeContributor implements TypeContributor {
 		}
 		JavaTypeDescriptorRegistry.INSTANCE.addDescriptor(jdesc);
 		typeContributions.contributeType(jtype);
+
+		ConfigurationService config = serviceRegistry.getService(ConfigurationService.class);
+		ClassLoaderService cls = serviceRegistry.getService(ClassLoaderService.class);
+
+		final boolean addArrays = config.getSetting("hibernate.arrays.json", StandardConverters.BOOLEAN, Boolean.FALSE);
+
+		LOGGER.info("JSON array type contribution " + (addArrays ? "enabled" : "disabled"));
+
+		if (addArrays) {
+			try {
+				Class<?> arrayTypes = cls.classForName("com.mopano.hibernate.array.ArrayTypes");
+				Method get = arrayTypes.getDeclaredMethod("get", AbstractStandardBasicType.class, ServiceRegistry.class);
+				AbstractSingleColumnStandardBasicType<?> jsonArrayType = (AbstractSingleColumnStandardBasicType<?>) get.invoke(null, jtype, serviceRegistry);
+				JavaTypeDescriptorRegistry.INSTANCE.addDescriptor(jsonArrayType.getJavaTypeDescriptor());
+				typeContributions.contributeType(jsonArrayType);
+			}
+			catch (Throwable t) {
+				LOGGER.error("JSON array type contribution failed!", t);
+			}
+		}
 	}
 
 }

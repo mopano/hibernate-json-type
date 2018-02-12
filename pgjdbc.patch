@@ -1,0 +1,12 @@
+diff --git a/pgjdbc/src/main/java/org/postgresql/jdbc/PgPreparedStatement.java b/pgjdbc/src/main/java/org/postgresql/jdbc/PgPreparedStatement.java
+index db0a378..b5d5861 100644
+--- a/pgjdbc/src/main/java/org/postgresql/jdbc/PgPreparedStatement.java
++++ b/pgjdbc/src/main/java/org/postgresql/jdbc/PgPreparedStatement.java
+@@ -241,6 +241,7 @@ class PgPreparedStatement extends PgStatement implements PreparedStatement {
+       case Types.DISTINCT:
+       case Types.STRUCT:
+       case Types.NULL:
++      case Types.JAVA_OBJECT:
+       case Types.OTHER:
+         oid = Oid.UNSPECIFIED;
+         break;

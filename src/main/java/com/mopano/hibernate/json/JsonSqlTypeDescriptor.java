@@ -26,7 +26,7 @@ public class JsonSqlTypeDescriptor implements SqlTypeDescriptor {
 
 	@Override
 	public int getSqlType() {
-		return Types.OTHER;
+		return Types.JAVA_OBJECT;
 	}
 
 	@Override
