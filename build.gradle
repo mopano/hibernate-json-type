@@ -9,47 +9,40 @@ ext {
 }
 
 group = 'com.mopano'
-version = '1.0'
+version = '1.1'
 
-sourceCompatibility = '1.7'
-targetCompatibility = '1.7'
+sourceCompatibility = '1.8'
+targetCompatibility = '1.8'
 [compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
 
-tasks.withType(JavaCompile) {
-	if (project.hasProperty('JAVA7_HOME')) {
-        options.bootClasspath = "$JAVA7_HOME/jre/lib/rt.jar"
-    }
-}
-
 repositories {
-    mavenCentral()
+	mavenLocal()
+	mavenCentral()
 }
 
 configurations {
-    glassfish
-    johnzon
-    jackson
+	glassfish
+	johnzon
+	jackson
 }
 
 sourceSets {
-    jackson {
-        resources {
-            srcDir 'src/jackson/resources'
-        }
-    }
+	jackson {
+		resources {
+			srcDir 'src/jackson/resources'
+		}
+	}
 }
 
 
 dependencies {
-	compile group: 'org.hibernate', name: 'hibernate-entitymanager', version: '5.1.0.Final'
+	compile group: 'org.hibernate', name: 'hibernate-core', version: '5.2.0.Final'
 	compile group: 'javax.json', name: 'javax.json-api', version: '1.0'
 	testCompile group: 'junit', name: 'junit', version: '4.10'
-	testRuntime group: 'org.postgresql', name: 'postgresql', version: '9.4.1212.jre7'
-	testCompile group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.5'
-	testCompile group: 'org.apache.logging.log4j', name: 'log4j-slf4j-impl', version: '2.5'
-    glassfish group: 'org.glassfish', name: 'javax.json', version: '1.0.4'
-    johnzon group: 'org.apache.johnzon', name: 'johnzon-core', version: '0.9.5'
-    jackson group: 'com.github.pgelinas', name: 'jackson-javax-json', version: '0.9.0'
+	testRuntime group: 'org.postgresql', name: 'postgresql', version: '42.2.1'
+	glassfish group: 'org.glassfish', name: 'javax.json', version: '1.0.4'
+	johnzon group: 'org.apache.johnzon', name: 'johnzon-core', version: '0.9.5'
+	jackson group: 'com.github.pgelinas', name: 'jackson-javax-json', version: '0.9.0'
 }
 
 jar {
@@ -60,21 +53,18 @@ task compile
 compile.dependsOn compileJava, processResources, compileTestJava, processTestResources
 
 task testProviderGlassfish(type:Test, dependsOn: compile) {
-	systemProperty 'org.jboss.logging.provider', 'slf4j'
 	systemProperty 'expect.provider', 'org.glassfish.json.JsonProviderImpl'
 	systemProperty 'json.provider.short', 'glassfish'
 	classpath = classpath + configurations.glassfish
 }
 
 task testProviderJohnzon(type:Test, dependsOn: compile) {
-	systemProperty 'org.jboss.logging.provider', 'slf4j'
 	systemProperty 'expect.provider', 'org.apache.johnzon.core.JsonProviderImpl'
 	systemProperty 'json.provider.short', 'johnzon'
 	classpath = classpath + configurations.johnzon
 }
 
 task testProviderJackson(type:Test, dependsOn: compile) {
-	systemProperty 'org.jboss.logging.provider', 'slf4j'
 	systemProperty 'expect.provider', 'com.github.pgelinas.jackson.javax.json.spi.JacksonProvider'
 	systemProperty 'json.provider.short', 'jackson'
 	classpath = configurations.jackson + classpath + sourceSets.jackson.getRuntimeClasspath()
@@ -84,70 +74,70 @@ test.dependsOn testProviderGlassfish, testProviderJohnzon, testProviderJackson
 test.actions = []
 
 task sourcesJar(type: Jar, dependsOn: compileJava) {
-    from sourceSets.main.allSource
-    classifier = 'sources'
+	from sourceSets.main.allSource
+	classifier = 'sources'
 }
 task javadocJar(type: Jar, dependsOn: 'javadoc') {
-    from javadoc.destinationDir
-    classifier = 'javadoc'
+	from javadoc.destinationDir
+	classifier = 'javadoc'
 }
 
 publishing {
-    publications {
-        mavenJava(MavenPublication) {
-            from components.java
-            artifact sourcesJar
-            artifact javadocJar
+	publications {
+		mavenJava(MavenPublication) {
+			from components.java
+			artifact sourcesJar
+			artifact javadocJar
 
-            // Maven publish plugin adds ALL dependencies with 'runtime' scope
-            // see https://github.com/gradle/gradle/blob/b004f39ece183176bf77c1eebc4aa5cbc20ca5cc/subprojects/maven/src/main/java/org/gradle/api/publish/maven/tasks/GenerateMavenPom.java#L104
-            pom.withXml {
-                Node projNode = asNode()
-                projNode.children().each { projSubnode ->
-                    if (projSubnode.name().getLocalPart().equals('dependencies')) {
-                        projSubnode.children().each { depnode ->
-                            if (depnode.name().getLocalPart().equals('dependency')) {
-                                depnode.children().each { depchild ->
-                                    if (depchild.name().getLocalPart().equals('scope')) {
-                                        depchild.setValue('compile')
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+			// Maven publish plugin adds ALL dependencies with 'runtime' scope
+			// see https://github.com/gradle/gradle/blob/b004f39ece183176bf77c1eebc4aa5cbc20ca5cc/subprojects/maven/src/main/java/org/gradle/api/publish/maven/tasks/GenerateMavenPom.java#L104
+			pom.withXml {
+				Node projNode = asNode()
+				projNode.children().each { projSubnode ->
+					if (projSubnode.name().getLocalPart().equals('dependencies')) {
+						projSubnode.children().each { depnode ->
+							if (depnode.name().getLocalPart().equals('dependency')) {
+								depnode.children().each { depchild ->
+									if (depchild.name().getLocalPart().equals('scope')) {
+										depchild.setValue('compile')
+									}
+								}
+							}
+						}
+					}
+				}
 
-               	// shamelessly copied from Hibernate build plugin
-                projNode.appendNode('name', projName)
-                projNode.appendNode('description', projDescription)
-                Node licenseNode = projNode.appendNode('licenses').appendNode('license')
-                licenseNode.appendNode('name', 'Modified BSD License')
-                licenseNode.appendNode('url', 'https://opensource.org/licenses/BSD-3-Clause')
+				// shamelessly copied from Hibernate build plugin
+				projNode.appendNode('name', projName)
+				projNode.appendNode('description', projDescription)
+				Node licenseNode = projNode.appendNode('licenses').appendNode('license')
+				licenseNode.appendNode('name', 'Modified BSD License')
+				licenseNode.appendNode('url', 'https://opensource.org/licenses/BSD-3-Clause')
 
-                licenseNode.appendNode('distribution', 'repo')
-                projNode.appendNode('url', 'https://github.com/mopano/hibernate-json-type')
-                Node scmNode = projNode.appendNode('scm')
-                scmNode.appendNode('url', 'https://github.com/mopano/hibernate-json-type')
-                scmNode.appendNode('connection', 'scm:git:https://github.com/mopano/hibernate-json-type.git')
-                scmNode.appendNode('developerConnection', 'scm:git:git@github.com:mopano/hibernate-json-type.git')
+				licenseNode.appendNode('distribution', 'repo')
+				projNode.appendNode('url', 'https://github.com/mopano/hibernate-json-type')
+				Node scmNode = projNode.appendNode('scm')
+				scmNode.appendNode('url', 'https://github.com/mopano/hibernate-json-type')
+				scmNode.appendNode('connection', 'scm:git:https://github.com/mopano/hibernate-json-type.git')
+				scmNode.appendNode('developerConnection', 'scm:git:git@github.com:mopano/hibernate-json-type.git')
 
-                Node developersNode = projNode.appendNode('developers')
-                    Node developerNode = developersNode.appendNode('developer')
-                    developerNode.appendNode('id', 'coladict')
-                    developerNode.appendNode('name', 'Yordan Gigov')
-                    developerNode.appendNode('organization', 'Mopano')
-                    developerNode.appendNode('organizationUrl', 'https://mopano.com')
-            }
-        }
-    }
+				Node developersNode = projNode.appendNode('developers')
+					Node developerNode = developersNode.appendNode('developer')
+					developerNode.appendNode('id', 'coladict')
+					developerNode.appendNode('name', 'Yordan Gigov')
+					developerNode.appendNode('organization', 'Mopano')
+					developerNode.appendNode('organizationUrl', 'https://mopano.com')
+			}
+		}
+	}
 }
 
 model {
-    tasks.generatePomFileForMavenJavaPublication {
-        destination = file( "$project.buildDir/generated-pom.xml" )
-    }
+	tasks.generatePomFileForMavenJavaPublication {
+		destination = file( "$project.buildDir/generated-pom.xml" )
+	}
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = expectedGradleVersion
+	gradleVersion = expectedGradleVersion
 }

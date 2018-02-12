@@ -18,8 +18,7 @@ import javax.persistence.Id;
 import javax.persistence.Persistence;
 import javax.persistence.Table;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.jboss.logging.Logger;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -30,7 +29,7 @@ public class JsonContributionTest {
 
 	private static EntityManagerFactory emf;
 
-	private static final Logger LOGGER = LogManager.getLogger(JsonContributionTest.class);
+	private static final Logger LOGGER = Logger.getLogger(JsonContributionTest.class);
 
 	@BeforeClass
 	public static void setupJPA() {

@@ -23,6 +23,9 @@ public class JsonType extends AbstractSingleColumnStandardBasicType<JsonStructur
 	public JsonType() {
 		super(JsonSqlTypeDescriptor.INSTANCE, JsonJavaTypeDescriptor.INSTANCE);
 		regKeys = new String[]{
+			"JSON",
+			"json",
+			"jsonb",
 			Json.createArrayBuilder().add("val").build().getClass().getName(),
 			Json.createObjectBuilder().add("name", "value").build().getClass().getName(),
 			JsonArray.class.getName(),

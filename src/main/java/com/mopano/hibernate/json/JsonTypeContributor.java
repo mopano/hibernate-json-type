@@ -11,7 +11,11 @@ import org.hibernate.service.ServiceRegistry;
 import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
 import org.hibernate.type.descriptor.java.JavaTypeDescriptorRegistry;
 
+import org.jboss.logging.Logger;
+
 public class JsonTypeContributor implements TypeContributor {
+
+	private static final Logger LOGGER = Logger.getLogger(org.hibernate.type.BasicType.class);
 
 	@Override
 	public void contribute(TypeContributions typeContributions, ServiceRegistry serviceRegistry) {
@@ -22,9 +26,7 @@ public class JsonTypeContributor implements TypeContributor {
 			jdesc = JsonJavaTypeDescriptor.INSTANCE;
 		}
 		catch (Throwable t) {
-			// Avoid logging system for a project so small
-			System.err.println("JSON type contribution failed! Message: " + t.getMessage());
-			t.printStackTrace(System.err);
+			LOGGER.error("JSON type contribution failed!", t);
 			return;
 		}
 		JavaTypeDescriptorRegistry.INSTANCE.addDescriptor(jdesc);
