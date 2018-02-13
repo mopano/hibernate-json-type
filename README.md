@@ -1,4 +1,4 @@
-JSON datatype contributor for Hibernate ORM 5.1+
+JSON datatype contributor for Hibernate ORM 5.2+
 ========
 
 If you need to use `javax.json.JsonArray`, `javax.json.JsonObject` or
@@ -7,6 +7,15 @@ Hibernate as your JPA provider, this is the plugin for you, so long as
 Hibernate, your JSR-353 provider and this plugin are loaded by the same
 ClassLoader, which is the typical use-case.
 
+Changelog:
+--------
+
+Version 1.1: 
+
+* Updated Hibernate version to 5.2, requiring Java 8.
+* Removed test dependency log4j, using JBoss logger, available from Hibernate, instead.
+* Add database types to case-sensitive registration keys. No effect, unless you manage to somehow load the contributor with the hibernate-mapping tool for class generation from a live database.
+* `build.gradle` no longer mixes tabs and spaces for indentation. Now it's tabs only.
 
 Set-up for testing environment:
 --------
@@ -21,9 +30,6 @@ Assuming you have your JAVA_HOME environment variable pointing to JDK7
 
     ./gradlew clean build
 
-If your default JDK is 8 or 9 and you wish to avoid the warnings and compile
-with 7, you can run it with `-PJAVA7_HOME=/path/to/jdk7`.
-
 If you want to build without running the tests, use `assemble` instead of `build`.
 
 To make the final jar available for your Maven or compatible project type
@@ -36,13 +42,13 @@ Now you just need to add the dependency to your project's `pom.xml`.
     <dependency>
         <groupId>com.mopano</groupId>
         <artifactId>hibernate-json-contributor</artifactId>
-        <version>1.0</version>
+        <version>1.1</version>
     </dependency>
 
 Or if you're using Gradle:
 
     dependencies {
-        compile group: 'com.mopano', name: 'hibernate-json-contributor', version: '1.0'
+        compile group: 'com.mopano', name: 'hibernate-json-contributor', version: '1.1'
     }
 
 
