@@ -9,7 +9,7 @@ ext {
 }
 
 group = 'com.mopano'
-version = '1.1'
+version = '1.2'
 
 sourceCompatibility = '1.8'
 targetCompatibility = '1.8'
@@ -24,6 +24,7 @@ configurations {
 	glassfish
 	johnzon
 	jackson
+	arrayTest
 }
 
 sourceSets {
@@ -32,6 +33,10 @@ sourceSets {
 			srcDir 'src/jackson/resources'
 		}
 	}
+	arrayTest {
+		java.srcDir 'src/arraytest/java'
+		resources.srcDir 'src/arraytest/resources'
+	}
 }
 
 
@@ -39,10 +44,17 @@ dependencies {
 	compile group: 'org.hibernate', name: 'hibernate-core', version: '5.2.0.Final'
 	compile group: 'javax.json', name: 'javax.json-api', version: '1.0'
 	testCompile group: 'junit', name: 'junit', version: '4.10'
-	testRuntime group: 'org.postgresql', name: 'postgresql', version: '42.2.1'
+	// postgresql driver requires custom version patch to support null values. see pgjdbc.patch
+	testRuntime group: 'org.postgresql', name: 'postgresql', version: '42.2.2'
 	glassfish group: 'org.glassfish', name: 'javax.json', version: '1.0.4'
 	johnzon group: 'org.apache.johnzon', name: 'johnzon-core', version: '0.9.5'
 	jackson group: 'com.github.pgelinas', name: 'jackson-javax-json', version: '0.9.0'
+	arrayTestCompile sourceSets.main.output
+	arrayTestCompile configurations.compile
+	arrayTestCompile configurations.testCompile
+	arrayTestCompile group: 'com.mopano', name: 'hibernate-array-contributor', version: '1.1'
+	arrayTestRuntime configurations.runtime
+	arrayTestRuntime configurations.testRuntime
 }
 
 jar {
@@ -51,6 +63,15 @@ jar {
 
 task compile
 compile.dependsOn compileJava, processResources, compileTestJava, processTestResources
+
+task arrayTest(type: Test, dependsOn: compile){
+	// proof of concept for the array contributor extensibility
+	description = "Run array tests (located in src/arraytest/...)."
+	systemProperty 'expect.provider', 'org.glassfish.json.JsonProviderImpl'
+	systemProperty 'json.provider.short', 'glassfish'
+	testClassesDir = sourceSets.arrayTest.output.classesDir
+	classpath = sourceSets.arrayTest.runtimeClasspath + configurations.glassfish
+}
 
 task testProviderGlassfish(type:Test, dependsOn: compile) {
 	systemProperty 'expect.provider', 'org.glassfish.json.JsonProviderImpl'
@@ -70,7 +91,7 @@ task testProviderJackson(type:Test, dependsOn: compile) {
 	classpath = configurations.jackson + classpath + sourceSets.jackson.getRuntimeClasspath()
 }
 
-test.dependsOn testProviderGlassfish, testProviderJohnzon, testProviderJackson
+test.dependsOn testProviderGlassfish, testProviderJohnzon, testProviderJackson, arrayTest
 test.actions = []
 
 task sourcesJar(type: Jar, dependsOn: compileJava) {

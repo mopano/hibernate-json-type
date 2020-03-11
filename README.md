@@ -17,6 +17,10 @@ Version 1.1:
 * Add database types to case-sensitive registration keys. No effect, unless you manage to somehow load the contributor with the hibernate-mapping tool for class generation from a live database.
 * `build.gradle` no longer mixes tabs and spaces for indentation. Now it's tabs only.
 
+Version 1.2:
+
+* When used in conjunction with `hibernate-array-contributor`, it will automatically register the array types.
+
 Set-up for testing environment:
 --------
 
