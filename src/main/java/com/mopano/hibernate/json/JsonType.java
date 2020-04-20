@@ -15,14 +15,13 @@ public class JsonType extends AbstractSingleColumnStandardBasicType<JsonStructur
 
 	private static final long serialVersionUID = -7456425337156846489L;
 
+	private static final String NAME = "JSON";
 	private final String[] regKeys;
-	private final String name;
 
 	public static final JsonType INSTANCE = new JsonType();
 
 	public JsonType() {
-		super(JsonSqlTypeDescriptor.INSTANCE, JsonJavaTypeDescriptor.INSTANCE);
-		regKeys = new String[]{
+		this(new String[] {
 			"JSON",
 			"json",
 			"jsonb",
@@ -31,23 +30,26 @@ public class JsonType extends AbstractSingleColumnStandardBasicType<JsonStructur
 			JsonArray.class.getName(),
 			JsonObject.class.getName(),
 			JsonStructure.class.getName()
-		};
-		name = "JSON";
+		});
+	}
+
+	public JsonType(String[] registrationKeys) {
+		super(JsonSqlTypeDescriptor.INSTANCE, JsonJavaTypeDescriptor.INSTANCE);
+		regKeys = registrationKeys;
 	}
 
 	@Override
 	public String getName() {
-		return name;
+		return JsonType.NAME;
 	}
 
 	@Override
 	public String[] getRegistrationKeys() {
-		return (String[]) regKeys.clone();
+		return regKeys.clone();
 	}
 
 	@Override
 	protected boolean registerUnderJavaType() {
 		return true;
 	}
-
 }
