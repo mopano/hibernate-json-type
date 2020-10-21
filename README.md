@@ -19,18 +19,25 @@ Version 1.1:
 
 Version 1.2:
 
-* When used in conjunction with `hibernate-array-contributor`, it will automatically register the array types.
+* When used in conjunction with `hibernate-array-contributor`, it will automatically register the array types, and you have a `hibernate.arrays.json` property set to `true` in your `persistence.xml`.
+
+Version 1.3:
+
+* Add MySQL support, with some attempt at detection. Default is still PostgreSQL.
+* Add support for configuration overrides.
+* Cleaned-up various warnings around the build.
 
 Set-up for testing environment:
 --------
 
 * PostgreSQL 9.2 server or newer, running on port 5432
-* Username, password and database `hibernate_orm_test` with full privileges that database.
+* MySQL 8.0.3 server or newer, running on port 3306
+* Username, password and database `hibernate_orm_test` with full privileges that database on both servers.
 
 Compiling:
 --------
 
-Assuming you have your JAVA_HOME environment variable pointing to JDK7
+Assuming you have your JAVA_HOME environment variable pointing to JDK8
 
     ./gradlew clean build
 
@@ -46,15 +53,24 @@ Now you just need to add the dependency to your project's `pom.xml`.
     <dependency>
         <groupId>com.mopano</groupId>
         <artifactId>hibernate-json-contributor</artifactId>
-        <version>1.1</version>
+        <version>1.3</version>
     </dependency>
 
 Or if you're using Gradle:
 
     dependencies {
-        compile group: 'com.mopano', name: 'hibernate-json-contributor', version: '1.1'
+        compile group: 'com.mopano', name: 'hibernate-json-contributor', version: '1.3'
     }
 
+
+Configuring against the default:
+--------
+
+To use a custom configuration, you must implement the `com.mopano.hibernate.json.spi.JsonSettings` class and override any settings for which you do not wish to use the default.
+
+You must list the class you've created as a standard Java service, by creating the file `META-INF/services/com.mopano.hibernate.json.spi.JsonSettings` in your resources directory, and adding the fully qualified class name of your implementation in it.
+
+Be sure to read the JavaDoc hints.
 
 Potential pitfall:
 --------

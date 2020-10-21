@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Mak Ltd. Varna, Bulgaria
+ * Copyright (c) Mak-Si Management Ltd. Varna, Bulgaria
  * All rights reserved.
  *
  */
@@ -19,14 +19,14 @@ import org.hibernate.type.descriptor.sql.BasicBinder;
 import org.hibernate.type.descriptor.sql.BasicExtractor;
 import org.hibernate.type.descriptor.sql.SqlTypeDescriptor;
 
-public class JsonSqlTypeDescriptor implements SqlTypeDescriptor {
+public class JsonSqlStringHandler implements SqlTypeDescriptor {
 
-	public static final JsonSqlTypeDescriptor INSTANCE = new JsonSqlTypeDescriptor();
+	public static final JsonSqlStringHandler INSTANCE = new JsonSqlStringHandler();
 	private static final long serialVersionUID = -7366336604892811986L;
 
 	@Override
 	public int getSqlType() {
-		return Types.OTHER;
+		return Types.VARCHAR;
 	}
 
 	@Override
@@ -41,14 +41,14 @@ public class JsonSqlTypeDescriptor implements SqlTypeDescriptor {
 			@Override
 			protected void doBind(PreparedStatement st, X value, int index, WrapperOptions options) throws SQLException {
 				final String printed = javaTypeDescriptor.unwrap(value, String.class, options);
-				st.setObject(index, printed, Types.OTHER);
+				st.setString(index, printed);
 			}
 
 			@Override
 			protected void doBind(CallableStatement st, X value, String name, WrapperOptions options)
 					throws SQLException {
 				final String printed = javaTypeDescriptor.unwrap(value, String.class, options);
-				st.setObject(name, printed, Types.OTHER);
+				st.setString(name, printed);
 			}
 		};
 	}
@@ -58,46 +58,19 @@ public class JsonSqlTypeDescriptor implements SqlTypeDescriptor {
 		return new BasicExtractor<X>(javaTypeDescriptor, this) {
 			@Override
 			protected X doExtract(ResultSet rs, String name, WrapperOptions options) throws SQLException {
-				return javaTypeDescriptor.wrap(extractFromObject(rs.getObject(name)), options);
+				return javaTypeDescriptor.wrap(rs.getString(name), options);
 			}
 
 			@Override
 			protected X doExtract(CallableStatement statement, int index, WrapperOptions options) throws SQLException {
-				return javaTypeDescriptor.wrap(extractFromObject(statement.getObject(index)), options);
+				return javaTypeDescriptor.wrap(statement.getString(index), options);
 			}
 
 			@Override
 			protected X doExtract(CallableStatement statement, String name, WrapperOptions options) throws SQLException {
-				return javaTypeDescriptor.wrap(extractFromObject(statement.getObject(name)), options);
+				return javaTypeDescriptor.wrap(statement.getString(name), options);
 			}
 		};
-	}
-
-	private String extractFromObject(Object o) {
-		if (o == null) {
-			return null;
-		}
-		if (o instanceof String) {
-			return (String) o;
-		}
-
-		// Use reflection because we get classloader conflicts in Tomcat 8.5 if we use direct references
-		// If driver is loaded from webapp, exception is in PG libraries when binding.
-		// If driver is loaded from tomcat, exception is here when extracting.
-		Class c = o.getClass();
-		try {
-			if (!"org.postgresql.util.PGobject".equals(c.getName())) {
-				throw new RuntimeException("Don't know how to convert result from database. Incoming type: " + c.getName());
-			}
-			Method m = c.getMethod("getValue");
-			return (String) m.invoke(o);
-		}
-		catch (RuntimeException re) {
-			throw re;
-		}
-		catch (Throwable t) {
-			throw new RuntimeException(t);
-		}
 	}
 
 }

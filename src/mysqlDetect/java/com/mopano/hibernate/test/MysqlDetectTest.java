@@ -18,6 +18,7 @@ import javax.persistence.Id;
 import javax.persistence.Persistence;
 import javax.persistence.Table;
 
+import org.apache.johnzon.core.JsonProviderImpl;
 import org.jboss.logging.Logger;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -25,11 +26,11 @@ import org.junit.Test;
 
 import static org.junit.Assert.*;
 
-public class JsonContributionTest {
+public class MysqlDetectTest {
 
 	private static EntityManagerFactory emf;
 
-	private static final Logger LOGGER = Logger.getLogger(JsonContributionTest.class);
+	private static final Logger LOGGER = Logger.getLogger(MysqlDetectTest.class);
 
 	@BeforeClass
 	public static void setupJPA() {
@@ -43,9 +44,8 @@ public class JsonContributionTest {
 
 	@Test
 	public void confirmProvider() {
-		JsonProvider jp = JsonProvider.provider();
 		String expected = System.getProperty("expect.provider");
-		assertEquals("Wrong JSON provider", expected, jp.getClass().getCanonicalName());
+		assertEquals("Wrong JSON provider", expected, JsonProviderImpl.class.getCanonicalName());
 	}
 
 	@Test

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Mak Ltd. Varna, Bulgaria
+ * Copyright (c) Mak-Si Management Ltd. Varna, Bulgaria
  * All rights reserved.
  *
  */
@@ -39,7 +39,7 @@ public class JsonArrayContributionTest {
 
 	@AfterClass
 	public static void closeJPA() {
-
+		emf.close();
 	}
 
 	@Test

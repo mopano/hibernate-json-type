@@ -3,13 +3,13 @@ apply plugin: 'maven-publish'
 apply plugin: 'osgi'
 
 ext {
-	expectedGradleVersion = '3.2.1'
+	expectedGradleVersion = '4.9'
 	projName = 'hibernate-json-contributor'
 	projDescription = 'A type contributor allowing Hibernate to use javax.json.JsonArray, javax.json.JsonObject and javax.json.JsonStructure objects inside entities. Used for PostgreSQL types json/jsonb.'
 }
 
 group = 'com.mopano'
-version = '1.2'
+version = '1.3'
 
 sourceCompatibility = '1.8'
 targetCompatibility = '1.8'
@@ -25,6 +25,8 @@ configurations {
 	johnzon
 	jackson
 	arrayTest
+	settingsLoader
+	mysqlDetect
 }
 
 sourceSets {
@@ -36,6 +38,14 @@ sourceSets {
 	arrayTest {
 		java.srcDir 'src/arraytest/java'
 		resources.srcDir 'src/arraytest/resources'
+	}
+	settingsLoader {
+		java.srcDir 'src/settingsLoader/java'
+		resources.srcDir 'src/settingsLoader/resources'
+	}
+	mysqlDetect {
+		java.srcDir 'src/mysqlDetect/java'
+		resources.srcDir 'src/mysqlDetect/resources'
 	}
 }
 
@@ -49,12 +59,27 @@ dependencies {
 	glassfish group: 'org.glassfish', name: 'javax.json', version: '1.0.4'
 	johnzon group: 'org.apache.johnzon', name: 'johnzon-core', version: '0.9.5'
 	jackson group: 'com.github.pgelinas', name: 'jackson-javax-json', version: '0.9.0'
+
 	arrayTestCompile sourceSets.main.output
 	arrayTestCompile configurations.compile
-	arrayTestCompile configurations.testCompile
+	arrayTestCompile group: 'junit', name: 'junit', version: '4.10'
 	arrayTestCompile group: 'com.mopano', name: 'hibernate-array-contributor', version: '1.1'
 	arrayTestRuntime configurations.runtime
 	arrayTestRuntime configurations.testRuntime
+
+	settingsLoaderCompile sourceSets.main.output
+	settingsLoaderCompile configurations.compile
+	settingsLoaderCompile group: 'org.apache.johnzon', name: 'johnzon-core', version: '0.9.5'
+	settingsLoaderCompile group: 'junit', name: 'junit', version: '4.10'
+	settingsLoaderRuntime configurations.runtime
+	settingsLoaderRuntime group: 'mysql', name: 'mysql-connector-java', version: '8.0.22'
+
+	mysqlDetectCompile sourceSets.main.output
+	mysqlDetectCompile configurations.compile
+	mysqlDetectCompile group: 'org.apache.johnzon', name: 'johnzon-core', version: '0.9.5'
+	mysqlDetectCompile group: 'junit', name: 'junit', version: '4.10'
+	mysqlDetectRuntime configurations.runtime
+	mysqlDetectRuntime group: 'mysql', name: 'mysql-connector-java', version: '8.0.22'
 }
 
 jar {
@@ -69,7 +94,7 @@ task arrayTest(type: Test, dependsOn: compile){
 	description = "Run array tests (located in src/arraytest/...)."
 	systemProperty 'expect.provider', 'org.glassfish.json.JsonProviderImpl'
 	systemProperty 'json.provider.short', 'glassfish'
-	testClassesDir = sourceSets.arrayTest.output.classesDir
+	testClassesDirs = sourceSets.arrayTest.output.classesDirs
 	classpath = sourceSets.arrayTest.runtimeClasspath + configurations.glassfish
 }
 
@@ -91,7 +116,21 @@ task testProviderJackson(type:Test, dependsOn: compile) {
 	classpath = configurations.jackson + classpath + sourceSets.jackson.getRuntimeClasspath()
 }
 
-test.dependsOn testProviderGlassfish, testProviderJohnzon, testProviderJackson, arrayTest
+task testMysqlAndSettings(type: Test, dependsOn: compile) {
+	systemProperty 'expect.provider', 'org.apache.johnzon.core.JsonProviderImpl'
+	systemProperty 'json.provider.short', 'johnzon'
+	testClassesDirs = sourceSets.settingsLoader.output.classesDirs
+	classpath = sourceSets.settingsLoader.runtimeClasspath
+}
+
+task testMysqlDetect(type: Test, dependsOn: compile) {
+	systemProperty 'expect.provider', 'org.apache.johnzon.core.JsonProviderImpl'
+	systemProperty 'json.provider.short', 'johnzon'
+	testClassesDirs = sourceSets.mysqlDetect.output.classesDirs
+	classpath = sourceSets.mysqlDetect.runtimeClasspath
+}
+
+test.dependsOn testProviderGlassfish, testProviderJohnzon, testProviderJackson, arrayTest, testMysqlAndSettings, testMysqlDetect
 test.actions = []
 
 task sourcesJar(type: Jar, dependsOn: compileJava) {
@@ -143,11 +182,11 @@ publishing {
 				scmNode.appendNode('developerConnection', 'scm:git:git@github.com:mopano/hibernate-json-type.git')
 
 				Node developersNode = projNode.appendNode('developers')
-					Node developerNode = developersNode.appendNode('developer')
-					developerNode.appendNode('id', 'coladict')
-					developerNode.appendNode('name', 'Yordan Gigov')
-					developerNode.appendNode('organization', 'Mopano')
-					developerNode.appendNode('organizationUrl', 'https://mopano.com')
+				Node developerNode = developersNode.appendNode('developer')
+				developerNode.appendNode('id', 'coladict')
+				developerNode.appendNode('name', 'Yordan Gigov')
+				developerNode.appendNode('organization', 'Mopano')
+				developerNode.appendNode('organizationUrl', 'https://mopano.com')
 			}
 		}
 	}
@@ -159,6 +198,25 @@ model {
 	}
 }
 
-task wrapper(type: Wrapper) {
+wrapper {
 	gradleVersion = expectedGradleVersion
+}
+
+def dolint = hasProperty("lint") ? getProperty("lint") : null;
+
+if ( dolint != null ) {
+	if ( dolint.contains("deprecation") ) {
+		gradle.projectsEvaluated {
+			tasks.withType(JavaCompile) {
+				options.compilerArgs << "-Xlint:deprecation"
+			}
+		}
+	}
+	if ( dolint.contains("unchecked") ) {
+		gradle.projectsEvaluated {
+			tasks.withType(JavaCompile) {
+				options.compilerArgs << "-Xlint:unchecked"
+			}
+		}
+	}
 }

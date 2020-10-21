@@ -1,1 +1,2 @@
 rootProject.name = 'hibernate-json-contributor'
+enableFeaturePreview('STABLE_PUBLISHING')
