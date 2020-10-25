@@ -1,7 +1,9 @@
 /*
  * Copyright (c) Mak-Si Management Ltd. Varna, Bulgaria
- * All rights reserved.
  *
+ * License: BSD 3-Clause license.
+ * See the LICENSE.md file in the root directory or <https://opensource.org/licenses/BSD-3-Clause>.
+ * See also <https://tldrlegal.com/license/bsd-3-clause-license-(revised)>.
  */
 package com.mopano.hibernate.test;
 
@@ -18,7 +20,6 @@ import javax.persistence.Id;
 import javax.persistence.Persistence;
 import javax.persistence.Table;
 
-import org.apache.johnzon.core.JsonProviderImpl;
 import org.jboss.logging.Logger;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -43,9 +44,18 @@ public class MysqlDetectTest {
 	}
 
 	@Test
-	public void confirmProvider() {
-		String expected = System.getProperty("expect.provider");
-		assertEquals("Wrong JSON provider", expected, JsonProviderImpl.class.getCanonicalName());
+	public void confirmDatabase() {
+		EntityManager em = emf.createEntityManager();
+		try {
+			String result = em.createNativeQuery("select version()").getSingleResult().toString().toLowerCase();
+			// tests run on PostgreSQL (the default) will return the database name.
+			// mariadb result will also return the name in the version function.
+			// mysql will return just a version number without the name
+			assertFalse(result.contains("postgresql"));
+		}
+		finally {
+			em.close();
+		}
 	}
 
 	@Test
